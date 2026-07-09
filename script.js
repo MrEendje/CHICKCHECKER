@@ -413,6 +413,9 @@ const screens = {
 const el = {
   inputName: document.getElementById("input-name"),
   btnStart: document.getElementById("btn-start"),
+  btnInfo: document.getElementById("btn-info"),
+  infoDialog: document.getElementById("info-dialog"),
+  btnInfoClose: document.getElementById("btn-info-close"),
   btnYes: document.getElementById("btn-yes"),
   btnNo: document.getElementById("btn-no"),
   btnUnsure: document.getElementById("btn-unsure"),
@@ -635,6 +638,11 @@ function restart() {
 }
 
 el.btnStart.addEventListener("click", startQuiz);
+el.btnInfo.addEventListener("click", () => el.infoDialog.showModal());
+el.btnInfoClose.addEventListener("click", () => el.infoDialog.close());
+el.infoDialog.addEventListener("click", (e) => {
+  if (e.target === el.infoDialog) el.infoDialog.close();
+});
 el.btnYes.addEventListener("click", () => answer("yes"));
 el.btnNo.addEventListener("click", () => answer("no"));
 el.btnUnsure.addEventListener("click", () => answer("unsure"));

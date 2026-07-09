@@ -32,7 +32,9 @@ body {
   min-height: 100dvh;
   display: flex;
   align-items: center;
+  align-items: safe center;
   justify-content: center;
+  justify-content: safe center;
   padding: 16px;
   overflow-x: hidden;
 }
@@ -64,6 +66,7 @@ body {
   padding: 32px 24px;
   text-align: center;
   box-shadow: 0 20px 50px rgba(120, 96, 55, 0.14);
+  position: relative;
 }
 
 /* ---------- Welcome screen ---------- */
@@ -118,6 +121,72 @@ h1 {
   font-size: 12px;
   margin-top: 18px;
   opacity: 0.8;
+}
+
+.btn-info {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #fffefb;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.btn-info:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ---------- Info dialog ---------- */
+.info-dialog {
+  max-width: 380px;
+  width: calc(100% - 48px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  background: var(--card-bg);
+  color: var(--text-dark);
+  box-shadow: 0 20px 50px rgba(120, 96, 55, 0.25);
+  text-align: center;
+}
+
+.info-dialog::backdrop {
+  background: rgba(74, 63, 51, 0.45);
+}
+
+.info-dialog .info-emoji {
+  font-size: 40px;
+  margin-bottom: 6px;
+}
+
+.info-dialog h2 {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.info-dialog p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-dark);
+  margin: 0 0 12px;
+  text-align: left;
+}
+
+.info-dialog .fineprint {
+  text-align: center;
+  margin: 0 0 20px;
 }
 
 /* ---------- Buttons ---------- */
