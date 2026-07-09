@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#e4d3b3">
+<title>ChickChecker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%90%94</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- WELCOME SCREEN -->
+  <section id="screen-welcome" class="screen active">
+    <div class="card">
+      <div class="logo">🐔</div>
+      <h1>ChickChecker</h1>
+      <p class="subtitle">Beantwoord een paar simpele vragen.<br>De vervolgvragen passen zich aan op wat jij antwoordt.</p>
+
+      <label class="field-label" for="input-name">Naam (optioneel)</label>
+      <input type="text" id="input-name" class="text-input" placeholder="bijv. Anna" maxlength="30" autocomplete="off">
+
+      <button class="btn btn-primary" id="btn-start">Start de check</button>
+      <p class="fineprint">Bloed-serieus vertrouw nooit meer op je eigen gevoel 😉</p>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section id="screen-quiz" class="screen">
+    <div class="card">
+      <button class="btn-quit" id="btn-quit" aria-label="Stop en ga terug naar home">✕ Stoppen</button>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-label">Vraag <span id="question-count">1</span> van ongeveer <span id="question-total">19</span></div>
+      </div>
+
+      <div class="question-box">
+        <p class="question-text" id="question-text">Vraag komt hier</p>
+      </div>
+
+      <div class="answer-buttons">
+        <button class="btn btn-answer btn-yes" id="btn-yes">✅ Ja</button>
+        <button class="btn btn-answer btn-no" id="btn-no">❌ Nee</button>
+      </div>
+      <button class="btn btn-unsure" id="btn-unsure">🤷 Weet niet</button>
+    </div>
+  </section>
+
+  <!-- RESULT SCREEN -->
+  <section id="screen-result" class="screen">
+    <div class="card">
+      <p class="result-for" id="result-for">Jouw resultaat</p>
+      <div class="result-emoji" id="result-emoji">🎉</div>
+      <h2 id="result-title">Resultaat</h2>
+      <div class="score-wrap">
+        <div class="score-circle" id="score-circle">
+          <span id="score-percent">0%</span>
+        </div>
+      </div>
+      <p class="result-flags" id="result-flags">0 van 15 groene vlaggen</p>
+      <p class="result-message" id="result-message"></p>
+
+      <div class="breakdown" id="breakdown">
+        <div class="breakdown-col">
+          <h3 class="breakdown-heading breakdown-heading-good">Sterke punten</h3>
+          <ul class="breakdown-list" id="breakdown-strengths"></ul>
+        </div>
+        <div class="breakdown-col">
+          <h3 class="breakdown-heading breakdown-heading-bad">Aandachtspunten</h3>
+          <ul class="breakdown-list" id="breakdown-concerns"></ul>
+        </div>
+      </div>
+
+      <div class="watermark">🐔 ChickChecker</div>
+      <button class="btn btn-primary" id="btn-restart">Opnieuw beginnen</button>
+    </div>
+  </section>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
