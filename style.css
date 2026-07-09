@@ -318,6 +318,33 @@ h1 {
   font-weight: 600;
 }
 
+.archetype {
+  background: var(--green-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin: 0 0 18px;
+}
+
+.archetype-emoji {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.archetype-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.archetype-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .result-message {
   font-size: 16px;
   line-height: 1.55;

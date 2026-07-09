@@ -1,227 +1,405 @@
-// Elke vraag heeft een "weight" (hoe zwaar hij meetelt), "goodOnYes"
-// (of "Ja" de gewenste/groene-vlag-richting is) en een "label" (korte
-// categorienaam voor de sterke-/zwaktepunten-analyse aan het einde).
-// Rode vlaggen wegen zwaarder dan gewone groene-vlag-vragen. Sommige
-// vragen hebben een "followUp": die wordt alleen ingevoegd als het
-// antwoord in followUp.on staat (bijv. een "Ja" of "Weet niet" op een
-// rode-vlag-vraag triggert een verdiepende vervolgvraag).
-const QUESTION_BANK = [
-  {
-    id: "humor",
-    label: "Humor",
-    text: "Maakt ze je regelmatig aan het lachen?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "chemie",
-    label: "Aantrekkingskracht",
-    text: "Voel je oprechte chemie als jullie samen zijn?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "ambitie",
-    label: "Ambitie",
-    text: "Heeft ze een baan, studie of duidelijk doel in haar leven?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "financien",
-    label: "Financiën",
-    text: "Heeft ze vaak geldproblemen of leent ze regelmatig geld van anderen?",
-    weight: 2,
-    goodOnYes: false,
-    followUp: {
-      on: ["yes", "unsure"],
-      question: {
-        id: "financien-patroon",
-        label: "Financiën",
-        text: "Is dit een terugkerend patroon, geen incident?",
+// ---------------------------------------------------------------------------
+// De vragenlijst is een verzameling categorieën. Elke categorie start met een
+// "gate"-vraag; afhankelijk van het antwoord kan een dieper liggende
+// vervolgvraag ("branches") worden gesteld — soms wel 2-3 niveaus diep. Een
+// duidelijk positief antwoord sluit een categorie meteen af, een twijfelachtig
+// of zorgwekkend antwoord opent een vertakking om preciezer te worden. Daardoor
+// hangt het totale aantal gestelde vragen (en niet alleen de antwoorden) echt
+// af van hoe iemand antwoordt — het aantal categorieën ligt vast, de diepte
+// per categorie niet.
+//
+// Elk knooppunt heeft:
+//   text        - de vraag
+//   weight      - hoe zwaar hij meetelt in de score
+//   goodOnYes   - of "Ja" de gewenste/groene-vlag-richting is
+//   trait       - (optioneel) { value, on } tagt een profieltrek als het
+//                 antwoord in "on" staat, gebruikt voor de type-uitkomst
+//   branches    - (optioneel) { yes, no, unsure } naar een dieper knooppunt
+function buildCategories() {
+  return [
+    {
+      id: "humor",
+      label: "Humor",
+      node: {
+        text: "Maakt ze je regelmatig aan het lachen?",
+        weight: 1,
+        goodOnYes: true,
+      },
+    },
+    {
+      id: "chemie",
+      label: "Aantrekkingskracht",
+      node: {
+        text: "Voel je oprechte chemie als jullie samen zijn?",
+        weight: 1,
+        goodOnYes: true,
+      },
+    },
+    {
+      id: "ambitie",
+      label: "Ambitie",
+      node: {
+        text: "Heeft ze een baan, studie of duidelijk doel in haar leven?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "ambitious", on: ["yes"] },
+      },
+    },
+    {
+      id: "financien",
+      label: "Financiën",
+      node: (() => {
+        const patroon = {
+          text: "Is dit een terugkerend patroon, geen incident?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Heeft ze vaak geldproblemen of leent ze regelmatig geld van anderen?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes"] },
+          branches: { yes: patroon, unsure: patroon },
+        };
+      })(),
+    },
+    {
+      id: "ex",
+      label: "Ex-gedrag",
+      node: (() => {
+        const vergelijkt = {
+          text: "Vergelijkt ze jou vaak (bewust of onbewust) met die ex?",
+          weight: 3,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        const gevoelens = {
+          text: "Lijkt ze nog gevoelens voor die ex te hebben?",
+          weight: 3,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+          branches: { yes: vergelijkt, unsure: vergelijkt },
+        };
+        return {
+          text: "Praat ze vaak over haar ex?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "guarded", on: ["yes"] },
+          branches: { yes: gevoelens, unsure: gevoelens },
+        };
+      })(),
+    },
+    {
+      id: "respect",
+      label: "Respect naar anderen",
+      node: (() => {
+        const patroon = {
+          text: "Heb je dit vaker dan één keer gezien?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Behandelt ze anderen (bijv. bediening) met respect?",
+          weight: 1,
+          goodOnYes: true,
+          trait: { value: "caretaker", on: ["yes"] },
+          branches: { no: patroon, unsure: patroon },
+        };
+      })(),
+    },
+    {
+      id: "communicatie",
+      label: "Communicatie",
+      node: (() => {
+        const patroon = {
+          text: "Gebeurt dit vaker dan één keer per week?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Laat ze je vaak wachten zonder bericht te sturen?",
+          weight: 2,
+          goodOnYes: false,
+          branches: { yes: patroon, unsure: patroon },
+        };
+      })(),
+    },
+    {
+      id: "interesse",
+      label: "Interesse in jou",
+      node: {
+        text: "Toont ze oprechte interesse in jouw leven en hobby's?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "caretaker", on: ["yes"] },
+      },
+    },
+    {
+      id: "leugen",
+      label: "Eerlijkheid",
+      node: (() => {
+        const ernst = {
+          text: "Ging het om iets belangrijks (bijv. andere mannen of geld), niet een onschuldig leugentje?",
+          weight: 3,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Heb je haar weleens op een leugen betrapt?",
+          weight: 2,
+          goodOnYes: false,
+          branches: { yes: ernst, unsure: ernst },
+        };
+      })(),
+    },
+    {
+      id: "ruzie",
+      label: "Conflicthantering",
+      node: {
+        text: "Kunnen jullie het oneens zijn zonder dat het meteen escaleert?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "steady", on: ["yes"] },
+      },
+    },
+    {
+      id: "grenzen",
+      label: "Grenzen respecteren",
+      node: {
+        text: "Accepteert ze het zonder morren als jij een grens aangeeft?",
         weight: 2,
-        goodOnYes: false,
+        goodOnYes: true,
+        trait: { value: "steady", on: ["yes"] },
       },
     },
-  },
-  {
-    id: "ex",
-    label: "Ex-gedrag",
-    text: "Praat ze vaak over haar ex?",
-    weight: 2,
-    goodOnYes: false,
-    followUp: {
-      on: ["yes", "unsure"],
-      question: {
-        id: "ex-gevoelens",
-        label: "Ex-gedrag",
-        text: "Lijkt ze nog gevoelens voor die ex te hebben?",
-        weight: 3,
-        goodOnYes: false,
-      },
-    },
-  },
-  {
-    id: "respect",
-    label: "Respect naar anderen",
-    text: "Behandelt ze anderen (bijv. bediening) met respect?",
-    weight: 1,
-    goodOnYes: true,
-    followUp: {
-      on: ["no", "unsure"],
-      question: {
-        id: "respect-patroon",
-        label: "Respect naar anderen",
-        text: "Heb je dit vaker dan één keer gezien?",
+    {
+      id: "verantwoordelijkheid",
+      label: "Verantwoordelijkheid",
+      node: {
+        text: "Neemt ze verantwoordelijkheid als ze een fout maakt, in plaats van het af te schuiven?",
         weight: 2,
-        goodOnYes: false,
+        goodOnYes: true,
+        trait: { value: "steady", on: ["yes"] },
       },
     },
-  },
-  {
-    id: "communicatie",
-    label: "Communicatie",
-    text: "Laat ze je vaak wachten zonder bericht te sturen?",
-    weight: 2,
-    goodOnYes: false,
-    followUp: {
-      on: ["yes", "unsure"],
-      question: {
-        id: "communicatie-patroon",
-        label: "Communicatie",
-        text: "Gebeurt dit vaker dan één keer per week?",
+    {
+      id: "emotie",
+      label: "Emotionele openheid",
+      node: (() => {
+        const afstand = {
+          text: "Merk je dat ze afstand houdt, zelfs als je er expliciet naar vraagt?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "guarded", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Praat ze open met jou over haar gevoelens?",
+          weight: 1,
+          goodOnYes: true,
+          branches: { no: afstand, unsure: afstand },
+        };
+      })(),
+    },
+    {
+      id: "luisteren",
+      label: "Luisteren",
+      node: {
+        text: "Heb je het gevoel dat ze echt naar je luistert?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "caretaker", on: ["yes"] },
+      },
+    },
+    {
+      id: "jaloezie",
+      label: "Jaloezie & controle",
+      node: (() => {
+        const telefoon = {
+          text: "Heeft ze weleens je telefoon gecheckt of naar je wachtwoorden gevraagd?",
+          weight: 3,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        const controle = {
+          text: "Probeert ze te bepalen met wie jij mag omgaan?",
+          weight: 3,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+          branches: { yes: telefoon, unsure: telefoon },
+        };
+        return {
+          text: "Is ze weleens overdreven jaloers of controlerend geweest?",
+          weight: 2,
+          goodOnYes: false,
+          branches: { yes: controle, unsure: controle },
+        };
+      })(),
+    },
+    {
+      id: "middelen",
+      label: "Alcohol/middelengebruik",
+      node: (() => {
+        const patroon = {
+          text: "Was dit al meerdere keren een probleem tijdens jullie afspraken?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Drinkt ze naar jouw idee te veel of te vaak op een zorgwekkende manier?",
+          weight: 2,
+          goodOnYes: false,
+          branches: { yes: patroon, unsure: patroon },
+        };
+      })(),
+    },
+    {
+      id: "eigen-leven",
+      label: "Eigen leven",
+      node: {
+        text: "Heeft ze een eigen leven naast jullie (vriendenkring, hobby's), in plaats van volledig op te gaan in jou?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "independent", on: ["yes"] },
+      },
+    },
+    {
+      id: "sociale-kring",
+      label: "Vriendenkring",
+      node: (() => {
+        const drama = {
+          text: "Heeft ze vaak drama of ruzie binnen haar vriendengroep?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "redflag", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Heeft ze een stabiele, gezonde vriendenkring?",
+          weight: 1,
+          goodOnYes: true,
+          branches: { no: drama, unsure: drama },
+        };
+      })(),
+    },
+    {
+      id: "familie",
+      label: "Familieband",
+      node: {
+        text: "Heeft ze een gezonde band met haar familie?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "steady", on: ["yes"] },
+      },
+    },
+    {
+      id: "avontuur",
+      label: "Spontaniteit",
+      node: {
+        text: "Staat ze open voor nieuwe ervaringen en spontane plannen?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "adventurous", on: ["yes"] },
+      },
+    },
+    {
+      id: "onzekerheid",
+      label: "Onzekerheid",
+      node: (() => {
+        const uiting = {
+          text: "Uit zich dat bijvoorbeeld in veel appjes sturen als je niet snel reageert, of jaloerse opmerkingen?",
+          weight: 2,
+          goodOnYes: false,
+          trait: { value: "insecure", on: ["yes", "unsure"] },
+        };
+        return {
+          text: "Heeft ze regelmatig bevestiging nodig over of je wel van haar houdt?",
+          weight: 1,
+          goodOnYes: false,
+          trait: { value: "insecure", on: ["yes"] },
+          branches: { yes: uiting, unsure: uiting },
+        };
+      })(),
+    },
+    {
+      id: "stress",
+      label: "Stressbestendigheid",
+      node: {
+        text: "Blijft ze redelijk kalm en volwassen onder stress of tegenslag?",
+        weight: 1,
+        goodOnYes: true,
+        trait: { value: "steady", on: ["yes"] },
+      },
+    },
+    {
+      id: "toekomst",
+      label: "Toekomstplannen",
+      node: {
+        text: "Lijken jullie toekomstplannen (settelen, kinderen, wonen) op elkaar?",
+        weight: 1,
+        goodOnYes: true,
+      },
+    },
+    {
+      id: "moeder",
+      label: "Gut-check",
+      node: {
+        text: "Zou je haar zonder twijfel aan je moeder voorstellen?",
         weight: 2,
-        goodOnYes: false,
+        goodOnYes: true,
       },
     },
-  },
-  {
-    id: "interesse",
-    label: "Interesse in jou",
-    text: "Toont ze oprechte interesse in jouw leven en hobby's?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "leugen",
-    label: "Eerlijkheid",
-    text: "Heb je haar weleens op een leugen betrapt?",
-    weight: 2,
-    goodOnYes: false,
-    followUp: {
-      on: ["yes", "unsure"],
-      question: {
-        id: "leugen-ernst",
-        label: "Eerlijkheid",
-        text: "Ging het om iets belangrijks (bijv. andere mannen of geld), niet een onschuldig leugentje?",
-        weight: 3,
-        goodOnYes: false,
-      },
-    },
-  },
-  {
-    id: "ruzie",
-    label: "Conflicthantering",
-    text: "Kunnen jullie het oneens zijn zonder dat het meteen escaleert?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "grenzen",
-    label: "Grenzen respecteren",
-    text: "Accepteert ze het zonder morren als jij een grens aangeeft?",
-    weight: 2,
-    goodOnYes: true,
-  },
-  {
-    id: "verantwoordelijkheid",
-    label: "Verantwoordelijkheid",
-    text: "Neemt ze verantwoordelijkheid als ze een fout maakt, in plaats van het af te schuiven?",
-    weight: 2,
-    goodOnYes: true,
-  },
-  {
-    id: "emotie",
-    label: "Emotionele openheid",
-    text: "Praat ze open met jou over haar gevoelens?",
-    weight: 1,
-    goodOnYes: true,
-    followUp: {
-      on: ["no", "unsure"],
-      question: {
-        id: "emotie-afstand",
-        label: "Emotionele openheid",
-        text: "Merk je dat ze afstand houdt, zelfs als je er expliciet naar vraagt?",
-        weight: 2,
-        goodOnYes: false,
-      },
-    },
-  },
-  {
-    id: "luisteren",
-    label: "Luisteren",
-    text: "Heb je het gevoel dat ze echt naar je luistert?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "jaloezie",
-    label: "Jaloezie & controle",
-    text: "Is ze weleens overdreven jaloers of controlerend geweest?",
-    weight: 2,
-    goodOnYes: false,
-    followUp: {
-      on: ["yes", "unsure"],
-      question: {
-        id: "controle",
-        label: "Jaloezie & controle",
-        text: "Probeert ze te bepalen met wie jij mag omgaan?",
-        weight: 3,
-        goodOnYes: false,
-      },
-    },
-  },
-  {
-    id: "middelen",
-    label: "Alcohol/middelengebruik",
-    text: "Drinkt ze naar jouw idee te veel of te vaak op een zorgwekkende manier?",
-    weight: 2,
-    goodOnYes: false,
-    followUp: {
-      on: ["yes", "unsure"],
-      question: {
-        id: "middelen-patroon",
-        label: "Alcohol/middelengebruik",
-        text: "Was dit al meerdere keren een probleem tijdens jullie afspraken?",
-        weight: 2,
-        goodOnYes: false,
-      },
-    },
-  },
-  {
-    id: "eigen-leven",
-    label: "Eigen leven",
-    text: "Heeft ze een eigen leven naast jullie (vriendenkring, hobby's), in plaats van volledig op te gaan in jou?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "toekomst",
-    label: "Toekomstplannen",
-    text: "Lijken jullie toekomstplannen (settelen, kinderen, wonen) op elkaar?",
-    weight: 1,
-    goodOnYes: true,
-  },
-  {
-    id: "moeder",
-    label: "Gut-check",
-    text: "Zou je haar zonder twijfel aan je moeder voorstellen?",
-    weight: 2,
-    goodOnYes: true,
-  },
-];
+  ];
+}
 
-const STORAGE_KEY = "chickchecker_progress_v2";
+const CATEGORIES = buildCategories();
+
+const TRAIT_INFO = {
+  independent: {
+    emoji: "🦋",
+    title: "De Vrije Vlinder",
+    desc: "Ze heeft een eigen leven, vrienden en bezigheden, en gaat niet volledig in een relatie op.",
+  },
+  caretaker: {
+    emoji: "🤝",
+    title: "De Zorgzame Verbinder",
+    desc: "Ze is gericht op verbinding: ze luistert, toont interesse en denkt aan anderen.",
+  },
+  ambitious: {
+    emoji: "🚀",
+    title: "De Ambitieuze Doorzetter",
+    desc: "Duidelijke doelen en discipline staan bij haar voorop.",
+  },
+  redflag: {
+    emoji: "🚩",
+    title: "Rode-Vlaggen-Centrale",
+    desc: "Er kwamen meerdere zorgwekkende patronen naar voren, zoals controle, oneerlijkheid of jaloezie.",
+  },
+  guarded: {
+    emoji: "📕",
+    title: "Het Gesloten Boek",
+    desc: "Ze houdt haar gevoelens en gedachten liever voor zichzelf — lastiger om echt dichtbij te komen.",
+  },
+  adventurous: {
+    emoji: "🌍",
+    title: "De Avonturier",
+    desc: "Spontaan en op zoek naar nieuwe ervaringen — weinig fan van vaste routines.",
+  },
+  steady: {
+    emoji: "🪨",
+    title: "De Stabiele Rots",
+    desc: "Consistent, betrouwbaar en met beide benen op de grond.",
+  },
+  insecure: {
+    emoji: "🤔",
+    title: "De Onzekere Twijfelaar",
+    desc: "Ze heeft regelmatig bevestiging nodig en is gevoelig voor onzekerheid.",
+  },
+};
+
+const STORAGE_KEY = "chickchecker_progress_v3";
 const MAX_BREAKDOWN_ITEMS = 4;
 
 let state = null;
@@ -250,6 +428,9 @@ const el = {
   scoreCircle: document.getElementById("score-circle"),
   scorePercent: document.getElementById("score-percent"),
   resultFlags: document.getElementById("result-flags"),
+  archetypeEmoji: document.getElementById("archetype-emoji"),
+  archetypeTitle: document.getElementById("archetype-title"),
+  archetypeDesc: document.getElementById("archetype-desc"),
   resultMessage: document.getElementById("result-message"),
   breakdownStrengths: document.getElementById("breakdown-strengths"),
   breakdownConcerns: document.getElementById("breakdown-concerns"),
@@ -281,12 +462,13 @@ function loadProgress() {
 function startQuiz() {
   state = {
     name: el.inputName.value.trim(),
-    queue: QUESTION_BANK.map((q) => ({ ...q })),
-    pointer: 0,
+    categoryIndex: 0,
+    node: CATEGORIES[0].node,
     earned: 0,
     total: 0,
     greenFlags: 0,
     history: [],
+    traitTally: {},
   };
   saveProgress();
   renderQuestion();
@@ -294,35 +476,45 @@ function startQuiz() {
 }
 
 function renderQuestion() {
-  const q = state.queue[state.pointer];
-  el.questionText.textContent = q.text;
-  el.questionCount.textContent = state.pointer + 1;
-  el.questionTotal.textContent = state.queue.length;
-  el.progressFill.style.width = `${(state.pointer / state.queue.length) * 100}%`;
+  el.questionText.textContent = state.node.text;
+  el.questionCount.textContent = state.categoryIndex + 1;
+  el.questionTotal.textContent = CATEGORIES.length;
+  el.progressFill.style.width = `${(state.categoryIndex / CATEGORIES.length) * 100}%`;
 }
 
 function answer(value) {
   // value: "yes" | "no" | "unsure"
-  const q = state.queue[state.pointer];
+  const node = state.node;
+  const label = CATEGORIES[state.categoryIndex].label;
   const rawFraction = value === "yes" ? 1 : value === "no" ? 0 : 0.5;
-  const creditFraction = q.goodOnYes ? rawFraction : 1 - rawFraction;
+  const creditFraction = node.goodOnYes ? rawFraction : 1 - rawFraction;
 
-  state.earned += q.weight * creditFraction;
-  state.total += q.weight;
+  state.earned += node.weight * creditFraction;
+  state.total += node.weight;
   if (creditFraction >= 1) state.greenFlags++;
-  state.history.push({ label: q.label, weight: q.weight, creditFraction });
+  state.history.push({ label, weight: node.weight, creditFraction });
 
-  if (q.followUp && q.followUp.on.includes(value)) {
-    state.queue.splice(state.pointer + 1, 0, { ...q.followUp.question });
+  if (node.trait && node.trait.on.includes(value)) {
+    state.traitTally[node.trait.value] = (state.traitTally[node.trait.value] || 0) + node.weight;
   }
 
-  state.pointer++;
+  const nextNode = node.branches && node.branches[value];
 
-  if (state.pointer >= state.queue.length) {
+  if (nextNode) {
+    state.node = nextNode;
+    saveProgress();
+    renderQuestion();
+    return;
+  }
+
+  state.categoryIndex++;
+
+  if (state.categoryIndex >= CATEGORIES.length) {
     el.progressFill.style.width = "100%";
     clearProgress();
     showResult();
   } else {
+    state.node = CATEGORIES[state.categoryIndex].node;
     saveProgress();
     renderQuestion();
   }
@@ -364,9 +556,15 @@ function getVerdict(pct) {
   };
 }
 
+function getArchetype() {
+  const entries = Object.entries(state.traitTally);
+  if (entries.length === 0) return TRAIT_INFO.steady;
+  entries.sort((a, b) => b[1] - a[1]);
+  return TRAIT_INFO[entries[0][0]];
+}
+
 function renderBreakdownList(container, items, emptyText) {
   container.innerHTML = "";
-  container.classList.add("breakdown-list");
 
   if (items.length === 0) {
     const li = document.createElement("li");
@@ -386,14 +584,19 @@ function renderBreakdownList(container, items, emptyText) {
 function showResult() {
   const pct = Math.round((state.earned / state.total) * 100);
   const verdict = getVerdict(pct);
+  const archetype = getArchetype();
 
   el.resultFor.textContent = state.name ? `Resultaat voor ${state.name}` : "Jouw resultaat";
   el.resultEmoji.textContent = verdict.emoji;
   el.resultTitle.textContent = verdict.title;
   el.resultMessage.textContent = verdict.message;
-  el.resultFlags.textContent = `${state.greenFlags} van ${state.queue.length} groene vlaggen`;
+  el.resultFlags.textContent = `${state.greenFlags} van ${state.history.length} groene vlaggen`;
   el.scorePercent.textContent = `${pct}%`;
   el.scoreCircle.style.setProperty("--pct", pct);
+
+  el.archetypeEmoji.textContent = archetype.emoji;
+  el.archetypeTitle.textContent = `Type: ${archetype.title}`;
+  el.archetypeDesc.textContent = archetype.desc;
 
   const uniqueLabels = (predicate, sortKey) => {
     const seen = new Set();
@@ -444,7 +647,7 @@ el.btnQuit.addEventListener("click", () => {
 
 // Resume an in-progress check after a refresh/accidental close.
 const resumed = loadProgress();
-if (resumed && resumed.pointer < resumed.queue.length) {
+if (resumed && resumed.categoryIndex < CATEGORIES.length) {
   state = resumed;
   renderQuestion();
   showScreen("quiz");

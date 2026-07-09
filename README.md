@@ -9,12 +9,19 @@ een score en een concrete sterke-/zwaktepuntenanalyse.
 
 ## Features
 
-- **Adaptieve vragenlijst** — 19 hoofdvragen, met vervolgvragen die alleen
-  verschijnen als een antwoord daar aanleiding toe geeft (bijv. een rode vlag
-  bevestigen of juist ontkrachten). Elke sessie is dus net even anders.
+- **Adaptieve vragenboom** — 24 categorieën, elk met een startvraag die tot 3
+  niveaus dieper vertakt zodra een antwoord daar aanleiding toe geeft (bijv.
+  een rode vlag bevestigen of juist ontkrachten). Het aantal daadwerkelijk
+  gestelde vragen hangt dus echt af van de antwoorden (ergens tussen de 24 en
+  36) — net als bij Akinator wordt er dieper doorgevraagd naarmate een
+  antwoord twijfelachtig of zorgwekkend is.
 - **Ja / Nee / Weet niet** — geen geforceerde keuzes.
 - **Gewogen scoring** — rode vlaggen (jaloezie, leugens, financiële
   problemen, ...) tellen zwaarder mee dan standaard groene-vlag-vragen.
+- **Persoonlijkheidsprofiel** — naast het daten-verdict herkent de app ook
+  wat voor type ze is (bijv. "De Vrije Vlinder", "De Stabiele Rots",
+  "Rode-Vlaggen-Centrale"), gebaseerd op welke trekken tijdens de vragen het
+  vaakst naar voren kwamen.
 - **Sterke punten & aandachtspunten** — het resultaat is meer dan een los
   percentage: je krijgt te zien welke categorieën het sterkst en het meest
   zorgwekkend waren.
