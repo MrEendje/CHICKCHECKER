@@ -2,13 +2,17 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#e4d3b3">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#e4d3b3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1f1a15" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Wel of niet daten? Swipe door een slimme vragenlijst en krijg een eerlijk verdict, je date-type en kip-advies.">
 <title>ChickChecker</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%90%94</text></svg>">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<canvas id="fx" class="fx" aria-hidden="true"></canvas>
 
 <div class="app">
 
@@ -16,36 +20,82 @@
   <section id="screen-welcome" class="screen active">
     <div class="card">
       <button class="btn-info" id="btn-info" aria-label="Wat is ChickChecker?">ℹ️</button>
-      <div class="logo">🐔</div>
+      <button class="logo" id="logo" aria-label="Tok!">🐔</button>
       <h1>ChickChecker</h1>
-      <p class="subtitle">Beantwoord een paar simpele vragen.<br>De vervolgvragen passen zich aan op wat jij antwoordt.</p>
+      <p class="subtitle" id="tagline">Beantwoord een paar simpele vragen. De vervolgvragen passen zich aan op wat jij antwoordt.</p>
+
+      <p class="field-label">Wie check je?</p>
+      <div class="segmented" role="radiogroup" aria-label="Wie check je?">
+        <label class="seg-option"><input type="radio" name="gender" value="f" checked><span>👩 Haar</span></label>
+        <label class="seg-option"><input type="radio" name="gender" value="m"><span>👨 Hem</span></label>
+      </div>
 
       <label class="field-label" for="input-name">Naam (optioneel)</label>
       <input type="text" id="input-name" class="text-input" placeholder="bijv. Anna" maxlength="30" autocomplete="off">
 
+      <p class="field-label">Hoe grondig?</p>
+      <div class="segmented segmented-3" role="radiogroup" aria-label="Hoe grondig?">
+        <label class="seg-option"><input type="radio" name="mode" value="snel"><span>⚡ Snel<small>± 2 min</small></span></label>
+        <label class="seg-option"><input type="radio" name="mode" value="normaal" checked><span>🐔 Normaal<small>± 4 min</small></span></label>
+        <label class="seg-option"><input type="radio" name="mode" value="diep"><span>🔬 Diep<small>alles</small></span></label>
+      </div>
+
       <button class="btn btn-primary" id="btn-start">Start de check</button>
-      <p class="fineprint">Bloed-serieus vertrouw nooit meer op je eigen gevoel 😉</p>
+      <p class="fineprint">Elke check is anders: andere vragen, andere volgorde 🎲</p>
+
+      <div class="past" id="past" hidden>
+        <div class="past-head">
+          <h3 class="section-heading">Eerdere checks</h3>
+          <button class="btn-link" id="btn-past-clear">Wissen</button>
+        </div>
+        <ul class="past-list" id="past-list"></ul>
+      </div>
     </div>
   </section>
 
   <!-- QUIZ SCREEN -->
   <section id="screen-quiz" class="screen">
-    <div class="card">
-      <button class="btn-quit" id="btn-quit" aria-label="Stop en ga terug naar home">✕ Stoppen</button>
-      <div class="progress-wrap">
-        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-        <div class="progress-label">Onderdeel <span id="question-count">1</span> van <span id="question-total">24</span></div>
+    <div class="card card-quiz">
+      <div class="quiz-top">
+        <button class="btn-ghost" id="btn-back" aria-label="Vorige vraag">← Terug</button>
+        <span class="quiz-name" id="quiz-name"></span>
+        <button class="btn-ghost btn-quit" id="btn-quit" aria-label="Stop en ga terug naar home">✕ Stoppen</button>
       </div>
 
-      <div class="question-box">
-        <p class="question-text" id="question-text">Vraag komt hier</p>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-label">Onderdeel <span id="question-count">1</span> van <span id="question-total">22</span></div>
+      </div>
+
+      <div class="vibe" aria-hidden="true">
+        <span class="vibe-label">Vibe</span>
+        <div class="vibe-track"><span class="vibe-marker" id="vibe-marker">🐔</span></div>
+      </div>
+
+      <div class="q-stage">
+        <div class="q-card" id="q-card">
+          <div class="stamp stamp-yes" id="stamp-yes">JA</div>
+          <div class="stamp stamp-no" id="stamp-no">NEE</div>
+          <div class="stamp stamp-unsure" id="stamp-unsure">🤷</div>
+          <div class="q-meta">
+            <span class="q-category" id="q-category"></span>
+            <span class="q-deeper" id="q-deeper" hidden>🔍 Doorvraag</span>
+          </div>
+          <p class="question-text" id="question-text">Vraag komt hier</p>
+        </div>
+      </div>
+
+      <div class="mascot-row">
+        <div class="mascot" id="mascot" aria-hidden="true">🐔</div>
+        <div class="bubble" id="bubble" aria-live="polite">Swipe of tik maar!</div>
       </div>
 
       <div class="answer-buttons">
-        <button class="btn btn-answer btn-yes" id="btn-yes">✅ Ja</button>
         <button class="btn btn-answer btn-no" id="btn-no">❌ Nee</button>
+        <button class="btn btn-answer btn-yes" id="btn-yes">✅ Ja</button>
       </div>
       <button class="btn btn-unsure" id="btn-unsure">🤷 Weet niet</button>
+      <p class="hint">Swipe → ja · ← nee · ↑ weet niet<span class="hint-keys"> · toetsen J / N / W, Backspace = terug</span></p>
     </div>
   </section>
 
@@ -60,29 +110,56 @@
           <span id="score-percent">0%</span>
         </div>
       </div>
-      <p class="result-flags" id="result-flags">0 van 15 groene vlaggen</p>
+      <p class="result-flags" id="result-flags"></p>
+      <p class="result-rank" id="result-rank" hidden></p>
 
-      <div class="archetype" id="archetype">
-        <div class="archetype-emoji" id="archetype-emoji">🦋</div>
-        <div class="archetype-title" id="archetype-title">Type</div>
-        <p class="archetype-desc" id="archetype-desc"></p>
+      <div class="dealbreakers" id="dealbreakers" hidden>
+        <div class="dealbreakers-title">🚨 Dealbreaker-alarm</div>
+        <ul class="dealbreakers-list" id="dealbreakers-list"></ul>
+        <p class="dealbreakers-note" id="dealbreakers-note"></p>
       </div>
 
       <p class="result-message" id="result-message"></p>
 
-      <div class="breakdown" id="breakdown">
+      <div class="archetype">
+        <div class="archetype-emoji" id="archetype-emoji">🦋</div>
+        <div class="archetype-title" id="archetype-title">Type</div>
+        <p class="archetype-desc" id="archetype-desc"></p>
+        <p class="archetype-secondary" id="archetype-secondary" hidden></p>
+      </div>
+
+      <div class="dims">
+        <h3 class="section-heading">Per thema</h3>
+        <div id="dims-list"></div>
+      </div>
+
+      <div class="breakdown">
         <div class="breakdown-col">
           <h3 class="breakdown-heading breakdown-heading-good">Sterke punten</h3>
-          <ul class="breakdown-list" id="breakdown-strengths"></ul>
+          <ul class="breakdown-list strengths" id="breakdown-strengths"></ul>
         </div>
         <div class="breakdown-col">
           <h3 class="breakdown-heading breakdown-heading-bad">Aandachtspunten</h3>
-          <ul class="breakdown-list" id="breakdown-concerns"></ul>
+          <ul class="breakdown-list concerns" id="breakdown-concerns"></ul>
         </div>
       </div>
 
+      <div class="advice">
+        <div class="advice-title">🐔 Kip-advies</div>
+        <p class="advice-text" id="advice-text"></p>
+      </div>
+
+      <details class="answers">
+        <summary>Bekijk al je antwoorden (<span id="answers-count">0</span>)</summary>
+        <ol class="answers-list" id="answers-list"></ol>
+      </details>
+
+      <div class="result-actions">
+        <button class="btn btn-secondary" id="btn-share">📤 Delen</button>
+        <button class="btn btn-secondary" id="btn-download">🖼️ Afbeelding</button>
+      </div>
+      <button class="btn btn-primary" id="btn-restart">Nieuwe check</button>
       <div class="watermark">🐔 ChickChecker</div>
-      <button class="btn btn-primary" id="btn-restart">Opnieuw beginnen</button>
     </div>
   </section>
 
@@ -90,11 +167,14 @@
   <dialog id="info-dialog" class="info-dialog">
     <div class="info-emoji">🐔</div>
     <h2>Wat is ChickChecker?</h2>
-    <p>ChickChecker is een speelse vragenlijst die je helpt nadenken over een date of relatie. Je krijgt vragen over onderwerpen als communicatie, vertrouwen en jaloezie — de vervolgvragen passen zich automatisch aan op wat jij antwoordt.</p>
-    <p>Aan het einde krijg je een score, een profiel-type en een overzicht van sterke punten en aandachtspunten.</p>
-    <p class="fineprint">Voor de lol bedoeld, geen professioneel advies 😉</p>
+    <p>ChickChecker is een speelse vragenlijst die je helpt nadenken over een date of relatie. Je krijgt vragen over thema's als klik, communicatie, vertrouwen, stabiliteit en respect — de vervolgvragen passen zich automatisch aan op wat jij antwoordt.</p>
+    <p>Geen twee checks zijn hetzelfde: de vragen komen uit een grote pool, in een andere volgorde en anders geformuleerd. Swipe de vraagkaart naar rechts (ja), links (nee) of omhoog (weet niet), en ga terug als je je vergist.</p>
+    <p>Aan het einde krijg je een score, een profiel-type, een overzicht per thema en kip-advies. Je kunt het resultaat delen als afbeelding.</p>
+    <p class="fineprint">Voor de lol bedoeld, geen professioneel advies 😉 Alles blijft op je eigen apparaat.</p>
     <button class="btn btn-primary" id="btn-info-close">Snap ik</button>
   </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 </div>
 

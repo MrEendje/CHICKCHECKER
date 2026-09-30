@@ -9,28 +9,26 @@ een score en een concrete sterke-/zwaktepuntenanalyse.
 
 ## Features
 
-- **Adaptieve vragenboom** — 24 categorieën, elk met een startvraag die tot 3
-  niveaus dieper vertakt zodra een antwoord daar aanleiding toe geeft (bijv.
-  een rode vlag bevestigen of juist ontkrachten). Het aantal daadwerkelijk
-  gestelde vragen hangt dus echt af van de antwoorden (ergens tussen de 24 en
-  36) — net als bij Akinator wordt er dieper doorgevraagd naarmate een
-  antwoord twijfelachtig of zorgwekkend is.
-- **Ja / Nee / Weet niet** — geen geforceerde keuzes.
-- **Gewogen scoring** — rode vlaggen (jaloezie, leugens, financiële
-  problemen, ...) tellen zwaarder mee dan standaard groene-vlag-vragen.
-- **Persoonlijkheidsprofiel** — naast het daten-verdict herkent de app ook
-  wat voor type ze is (bijv. "De Vrije Vlinder", "De Stabiele Rots",
-  "Rode-Vlaggen-Centrale"), gebaseerd op welke trekken tijdens de vragen het
-  vaakst naar voren kwamen.
-- **Sterke punten & aandachtspunten** — het resultaat is meer dan een los
-  percentage: je krijgt te zien welke categorieën het sterkst en het meest
-  zorgwekkend waren.
-- **Voortgang wordt onthouden** — sluit je de pagina per ongeluk, dan kun je
-  verdergaan waar je gebleven was.
-- **Stop-knop** — sessie halverwege afbreken en terug naar het beginscherm,
-  met bevestiging zodat je niet per ongeluk je voortgang kwijtraakt.
-- **Personalisatie** — optioneel een naam invullen voor een persoonlijk
-  resultaat ("Resultaat voor Anna").
+- **Elke check is anders** — een pool van 38 categorieën; per sessie wordt er
+  een selectie getrokken, in willekeurige volgorde en met wisselende
+  formuleringen (soms met de naam van je date erin).
+- **Drie modi** — ⚡ Snel (12 onderdelen), 🐔 Normaal (22) of 🔬 Diep (alles).
+- **Haar of hem** — alle vragen passen zich aan.
+- **Adaptieve vragenboom** — elke startvraag kan tot 3 niveaus dieper
+  vertakken zodra een antwoord twijfelachtig of zorgwekkend is, Akinator-style.
+- **Swipen als op een datingapp** — → ja, ← nee, ↑ weet niet. Of knoppen, of
+  toetsen (J / N / W). Vergist? **Terug**-knop of Backspace.
+- **Kip-mascotte** die live reageert, streaks bijhoudt, en een vibe-meter.
+- **Gewogen scoring met dealbreakers** — zware rode vlaggen (controle,
+  gaslighting, grenzen negeren, ...) drukken het oordeel, hoe hoog het
+  percentage ook is.
+- **Rijke uitslag** — score, persoonlijkheidstype (+ tweede type), score per
+  thema, sterke punten & aandachtspunten, kip-advies/date-idee, en al je
+  antwoorden terug te lezen.
+- **Delen** — als tekst of als mooie afbeelding (1080×1350).
+- **Eerdere checks** — je laatste resultaten staan op het beginscherm, met
+  ranking ("🏆 hoogste score van je laatste 5 checks").
+- **Voortgang wordt onthouden** en er is een **dark mode**.
 
 Puur voor de lol — vertrouw altijd op je eigen gevoel. 😉
 
@@ -41,8 +39,8 @@ build-stap.
 
 ```
 index.html   structuur van de 3 schermen (welkom, quiz, resultaat)
-style.css    styling (beige/zachte kleuren, rood/groen voor ratings)
-script.js    de adaptieve vragen-engine, scoring en state-persistentie
+style.css    styling (beige/zachte kleuren, dark mode, rood/groen voor ratings)
+script.js    vragenpool, adaptieve engine, scoring, swipes, delen en opslag
 ```
 
 ## Lokaal draaien
